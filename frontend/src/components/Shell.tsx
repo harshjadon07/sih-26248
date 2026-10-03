@@ -27,6 +27,9 @@ export function Shell() {
           <button onClick={() => navigate('/scenarios')} className="flex items-center gap-3 w-full p-2 text-left hover:bg-gray-800 rounded transition-colors text-gray-300 hover:text-white">
             <Settings size={18} /> Scenarios
           </button>
+          <button onClick={() => navigate('/instructor-room')} className="flex items-center gap-3 w-full p-2 text-left hover:bg-gray-800 rounded transition-colors text-gray-300 hover:text-white">
+            <Settings size={18} /> Instructor Room
+          </button>
         </nav>
         <div className="p-4 border-t border-gray-800">
           <button onClick={handleLogout} className="flex items-center gap-3 w-full p-2 text-left hover:bg-gray-800 rounded transition-colors text-red-400 hover:text-red-300">

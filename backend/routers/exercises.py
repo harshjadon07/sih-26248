@@ -97,3 +97,65 @@ def trigger_event(exercise_id: int, event_payload: dict, db: Session = Depends(g
     db.add(event)
     db.commit()
     return {"message": "Event triggered", "dropped": dropped, "delay_ms": delay_ms}
+
+@router.get("/{exercise_id}/aar")
+def get_aar_data(exercise_id: int, db: Session = Depends(get_db), user: models.User = Depends(require_instructor)):
+    exercise = db.query(models.Exercise).filter(models.Exercise.id == exercise_id).first()
+    if not exercise:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+        
+    events = db.query(models.Event).filter(models.Event.exercise_id == exercise_id).all()
+    decisions = db.query(models.Decision).filter(models.Decision.exercise_id == exercise_id).all()
+    
+    return {
+        "exercise": schemas.ExerciseResponse.model_validate(exercise).model_dump(),
+        "events": [{c.name: getattr(e, c.name) for c in e.__table__.columns} for e in events],
+        "decisions": [{c.name: getattr(d, c.name) for d in d.__table__.columns} for d in decisions]
+    }
+
+from fastapi.responses import Response, StreamingResponse
+import csv
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+
+@router.get("/{exercise_id}/export/csv")
+def export_csv(exercise_id: int, db: Session = Depends(get_db), user: models.User = Depends(require_instructor)):
+    events = db.query(models.Event).filter(models.Event.exercise_id == exercise_id).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "Type", "ScheduledTime", "ActualTime", "Payload", "GenerationTime", "DeliveryTime"])
+    
+    for e in events:
+        writer.writerow([e.id, e.event_type, e.scheduled_time, e.actual_time, e.payload, e.generation_time, e.delivery_time])
+        
+    response = Response(content=output.getvalue(), media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename=exercise_{exercise_id}_events.csv"
+    return response
+
+@router.get("/{exercise_id}/export/pdf")
+def export_pdf(exercise_id: int, db: Session = Depends(get_db), user: models.User = Depends(require_instructor)):
+    events = db.query(models.Event).filter(models.Event.exercise_id == exercise_id).all()
+    
+    output = io.BytesIO()
+    p = canvas.Canvas(output, pagesize=letter)
+    
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(100, 750, f"COMMAND-X After-Action Review (Exercise {exercise_id})")
+    
+    p.setFont("Helvetica", 12)
+    y = 720
+    for e in events:
+        if y < 50:
+            p.showPage()
+            y = 750
+        p.drawString(100, y, f"Event {e.id}: {e.event_type} | Time: {e.actual_time}ms | Delivered: {e.delivery_time}")
+        y -= 20
+        
+    p.save()
+    output.seek(0)
+    
+    response = StreamingResponse(output, media_type="application/pdf")
+    response.headers["Content-Disposition"] = f"attachment; filename=exercise_{exercise_id}_aar.pdf"
+    return response
