@@ -9,10 +9,14 @@ import models
 import schemas
 import auth
 from database import engine, get_db
+from routers import scenarios, exercises
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="COMMAND-X Backend")
+
+app.include_router(scenarios.router)
+app.include_router(exercises.router)
 
 app.add_middleware(
     CORSMiddleware,

@@ -26,6 +26,8 @@ class Scenario(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     description = Column(Text)
+    is_template = Column(Boolean, default=False)
+    configuration = Column(Text) # JSON string: initial conditions, participants, scheduled events, objectives
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     exercises = relationship("Exercise", back_populates="scenario")
 
@@ -35,6 +37,10 @@ class Exercise(Base):
     scenario_id = Column(Integer, ForeignKey("scenarios.id"))
     status = Column(String, default="planned") # planned, active, paused, completed
     started_at = Column(DateTime, nullable=True)
+    last_resumed_at = Column(DateTime, nullable=True)
+    accumulated_sim_time = Column(Integer, default=0) # milliseconds
+    random_seed = Column(Integer, default=0)
+    configuration_snapshot = Column(Text) # JSON snapshot of scenario configuration
     
     scenario = relationship("Scenario", back_populates="exercises")
     participants = relationship("Participant", back_populates="exercise")
@@ -56,7 +62,17 @@ class Event(Base):
     exercise_id = Column(Integer, ForeignKey("exercises.id"))
     event_type = Column(String)
     payload = Column(Text) # JSON string
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Simulation timestamps (in sim milliseconds)
+    scheduled_time = Column(Integer, nullable=True)
+    actual_time = Column(Integer, nullable=True)
+    
+    # Real-world auditable timestamps
+    generation_time = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    send_time = Column(DateTime, nullable=True)
+    delivery_time = Column(DateTime, nullable=True)
+    ack_time = Column(DateTime, nullable=True)
+    action_time = Column(DateTime, nullable=True)
     
     exercise = relationship("Exercise", back_populates="events")
 
