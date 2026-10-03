@@ -5,6 +5,7 @@ import { Dashboard } from './Dashboard';
 import { Scenarios } from './Scenarios';
 import { Workspace } from './Workspace';
 import { InstructorDashboard } from './InstructorDashboard';
+import { ExerciseList } from './ExerciseList';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="scenarios" element={<Scenarios />} />
+          <Route path="exercises" element={<ExerciseList />} />
           <Route path="instructor-room" element={<InstructorDashboard />} />
           <Route path="workspace/:exerciseId" element={<Workspace />} />
         </Route>

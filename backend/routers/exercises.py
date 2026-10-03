@@ -14,6 +14,21 @@ def require_instructor(current_user: models.User = Depends(auth.get_current_acti
         raise HTTPException(status_code=403, detail="Instructor role required")
     return current_user
 
+@router.get("/")
+def list_exercises(db: Session = Depends(get_db), user: models.User = Depends(auth.get_current_active_user)):
+    exercises = db.query(models.Exercise).all()
+    return [
+        {
+            "id": ex.id,
+            "scenario_id": ex.scenario_id,
+            "status": ex.status,
+            "started_at": ex.started_at.isoformat() if ex.started_at else None,
+            "accumulated_sim_time": ex.accumulated_sim_time,
+            "random_seed": ex.random_seed,
+        }
+        for ex in exercises
+    ]
+
 @router.post("/{scenario_id}", response_model=schemas.ExerciseResponse)
 def create_exercise(scenario_id: int, seed: int = 42, db: Session = Depends(get_db), user: models.User = Depends(require_instructor)):
     scenario = db.query(models.Scenario).filter(models.Scenario.id == scenario_id).first()

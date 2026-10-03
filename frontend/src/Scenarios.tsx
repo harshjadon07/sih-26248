@@ -43,6 +43,23 @@ export function Scenarios() {
     fetchScenarios();
   };
 
+  const handleInstantiate = async (scenarioId: number) => {
+    const res = await fetch(`http://localhost:8000/exercises/${scenarioId}?seed=42`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      alert(`Exercise instantiated! Exercise ID: ${data.id}\nShare this ID with trainees.`);
+      // Auto-start it
+      await fetch(`http://localhost:8000/exercises/${data.id}/start`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      alert(`Exercise ${data.id} has been started!`);
+    }
+  };
+
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Scenario Management</h2>
@@ -82,10 +99,15 @@ export function Scenarios() {
           {scenarios.length === 0 ? <p className="text-gray-400">No scenarios found.</p> : (
             <ul className="space-y-3">
               {scenarios.map(s => (
-                <li key={s.id} className="p-3 bg-gray-900 rounded border border-gray-700">
-                  <div className="font-bold">{s.name}</div>
+                <li key={s.id} className="p-3 bg-gray-900 rounded border border-gray-700 flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <div className="font-bold">{s.name}</div>
+                    <button onClick={() => handleInstantiate(s.id)} className="bg-green-600 hover:bg-green-500 text-white px-2 py-1 text-xs rounded font-bold">
+                      Start Exercise
+                    </button>
+                  </div>
                   <div className="text-sm text-gray-400">{s.description}</div>
-                  <pre className="text-xs text-gray-500 mt-2 bg-black p-2 rounded overflow-x-auto">{s.configuration}</pre>
+                  <pre className="text-xs text-gray-500 bg-black p-2 rounded overflow-x-auto">{s.configuration}</pre>
                 </li>
               ))}
             </ul>
