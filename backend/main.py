@@ -54,6 +54,24 @@ def seed_demo_data():
             db.add(models.User(username=u["username"], hashed_password=hashed, role_id=u["role_id"]))
     db.commit()
 
+    # Seed demo scenario
+    import json
+    if not db.query(models.Scenario).filter(models.Scenario.name == "Demo Scenario: Operation Cyber Storm").first():
+        config = {
+            "communication_disruptions": {
+                "dropout_rate": 0.2,
+                "delay_ms": 2000
+            }
+        }
+        demo_scenario = models.Scenario(
+            name="Demo Scenario: Operation Cyber Storm",
+            description="A fictional training scenario simulating cyber domain network degradation.",
+            is_template=True,
+            configuration=json.dumps(config)
+        )
+        db.add(demo_scenario)
+        db.commit()
+
 
 @app.post("/token", response_model=schemas.Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
