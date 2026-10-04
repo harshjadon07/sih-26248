@@ -125,7 +125,7 @@ def get_aar_data(exercise_id: int, db: Session = Depends(get_db), user: models.U
     return {
         "exercise": schemas.ExerciseResponse.model_validate(exercise).model_dump(),
         "events": [{c.name: getattr(e, c.name) for c in e.__table__.columns} for e in events],
-        "decisions": [{c.name: getattr(d, c.name) for d in d.__table__.columns} for d in decisions]
+        "decisions": [{c.name: getattr(d, c.name) for c in d.__table__.columns} for d in decisions]
     }
 
 from fastapi.responses import Response, StreamingResponse
